@@ -253,3 +253,49 @@ function grocery_shop_save_meta_box( $post_id ) {
         update_post_meta( $post_id, '_grocery_product_data', $grocery_product_data );
     }
 }
+
+/**
+ * SET UP THE PLUGIN SHORTCODE
+ */
+// Action hook to create the products shortcode
+add_shortcode( 'gs', 'grocery_shop_shortcode' );
+
+// Create shortcode
+function grocery_shop_shortcode( $atts, $content = null ) {
+
+    global $post;
+
+    extract( shortcode_atts( array( "show" => '' ), $atts ) );
+
+    //load options array
+    $gcery_options_arr = get_option( 'grocery_options' );
+
+    //load product data
+    $gcery_product_data = get_post_meta( $post->ID, '_grocery_product_data', true );
+
+    if ( $show == 'sku') {
+
+        $gs_show = ( !empty( $gcery_product_data['sku'] ) ) ? $gcery_product_data['sku'] : '';
+
+    }elseif ( $show == 'price' ) {
+
+        $gs_show = $gcery_options_arr['currency_sign'];
+        $gs_show = ( !empty( $gcery_product_data['price'] ) ) ? $gs_show . $gcery_product_data['price'] : '';
+
+    }elseif ( $show == 'weight' ) {
+
+        $gs_show = ( !empty( $gcery_product_data['weight'] ) ) ? $gcery_product_data['weight'] : '';
+
+    }elseif ( $show == 'color' ) {
+
+        $gs_show = ( !empty( $gcery_product_data['color'] ) ) ? $gcery_product_data['color'] : '';
+
+    }elseif ( $show == 'inventory' ) {
+
+        $gs_show = ( !empty( $gcery_product_data['inventory'] ) ) ? $gcery_product_data['inventory'] : '';
+
+    }
+    
+    //return the shortcode value to display
+    return $gs_show;
+}
