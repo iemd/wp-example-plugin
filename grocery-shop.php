@@ -223,3 +223,33 @@ function grocery_meta_box( $post ) {
     echo '<tr><td>'.__( 'Inventory', 'grocery-plugin' ).':</td><td>[gs show=inventory]</td></tr>';
     echo '</table>';
 }
+
+/**
+ * SAVING THE META BOX DATA
+ */
+// Action hook to save the meta box data when the post is saved
+add_action( 'save_post', 'grocery_shop_save_meta_box' );
+
+// Save meta box
+function grocery_shop_save_meta_box( $post_id ) {
+
+    //verify the post type is for Grocery Products and metadata has been posted
+    if( get_post_type( $post_id ) == 'grocery-products' && isset( $_POST['grocery_product'] ) ) {
+
+        //if autosave skip saving data
+        if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
+            return;
+
+        //check nonce for security
+        wp_verify_nonce( 'meta-box-save', 'grocery-plugin' );
+
+        //store option values in a variable
+        $grocery_product_data = $_POST['grocery_product'];
+
+        //use array map function to sanitize option values
+        $grocery_product_data = array_map( 'sanitize_text_field', $grocery_product_data );
+
+        //save the meta box data as post metadata
+        update_post_meta( $post_id, '_grocery_product_data', $grocery_product_data );
+    }
+}
