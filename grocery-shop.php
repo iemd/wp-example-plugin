@@ -85,3 +85,72 @@ function grocery_shop_init() {
 
     register_post_type( 'grocery-products', $args );
 }
+
+/**
+ * CREATING THE SETTINGS PAGE
+ */
+// Action hook to add the post products menu item
+add_action( 'admin_menu', 'grocery_shop_menu' );
+
+// Create the Grocery Masks sub-menu
+function grocery_shop_menu() {
+
+    add_options_page(
+        __( 'Grocery Shop Settings Page', 'grocery-plugin' ),
+        __( 'Grocery Shop Settings', 'grocery-plugin' ),
+        'manage_options',
+        'grocery-shop-settings',
+        'grocery_shop_settings_page' 
+    );
+
+}
+
+// Build the plugin settings page
+function grocery_shop_settings_page() {
+
+    //load the plugun options array
+    $gcery_options_arr = get_option( 'grocery_options' );
+
+    //set the option array values to variables
+    $gs_inventory = ( !empty( $gcery_options_arr['show_inventory'] ) ) ? $gcery_options_arr['show_inventory'] : '';
+    $gs_currency_sign = $gcery_options_arr['currency_sign'];
+    ?>
+    <div class="wrap">
+        <h2><?php _e( 'Grocery Shop Options', 'grocery-plugin' ) ?></h2>
+        <form method="post" action="options.php">
+            <?php settings_fields( 'grocery-settings-group' ); ?>
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row"><?php _e( 'Show Product Inventory', 'grocery-plugin' ) ?></th>
+                    <td><input type="checkbox" name="grocery_options[show_inventory]" <?php echo checked( $gs_inventory, 'on' ); ?> /></td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php _e( 'Currency Sign', 'grocery-plugin' ) ?></th>
+                    <td><input type="text" name="grocery_options[currency_sign]" value="<?php echo esc_attr( $gs_currency_sign ); ?>" size="1" maxlength="1" /></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" class="button-primary" value="<?php _e( 'Save Changes', 'grocery-plugin' ); ?>" />
+            </p>
+        </form>
+    </div>
+<?php  
+}
+
+// Action hook to register the plugin option settings
+add_action( 'admin_init', 'grocery_shop_register_settings' );
+
+function grocery_shop_register_settings() {
+
+    //register the array of settings
+    register_setting( 'grocery-settings-group', 'grocery_options', 'grocery_sanitize_options' );
+
+}
+
+function grocery_sanitize_options( $options ) {
+
+    $options['show_inventory'] = ( !empty( $options['show_inventory'] ) ) ? sanitize_text_field( $options['show_inventory'] ) : '';
+    $options['currency_sign'] = ( !empty( $options['currency_sign'] ) ) ? sanitize_text_field( $options['currency_sign'] ) : '';
+
+    return $options;
+}
