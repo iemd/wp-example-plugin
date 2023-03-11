@@ -25,3 +25,20 @@ License: GPLv2
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
+
+/**
+ * DEFAULT PLUGIN SETTINGS
+ */
+// Call function when plugin is activated
+register_activation_hook( __FILE__, 'grocery_shop_install' );
+
+function grocery_shop_install() {
+
+    //setup default option values
+    $gcery_options_arr = array(
+        'currency_sign' => '$'
+    );
+
+    //save our default option values
+    update_option( 'grocery_options', $gcery_options_arr );
+}
