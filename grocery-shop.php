@@ -154,3 +154,72 @@ function grocery_sanitize_options( $options ) {
 
     return $options;
 }
+
+/**
+ * REGISTERING THE META BOX FOR SAVING PRODUCT METADATA
+ */
+// Action hook to register the Products meta box
+add_action( 'add_meta_boxes', 'grocery_shop_register_meta_box' );
+
+function grocery_shop_register_meta_box() {
+
+    //create our custom meta box
+    add_meta_box(
+        'grocery-product-meta',
+        __( 'Product Information', 'grocery-plugin' ),
+        'grocery_meta_box',
+        'grocery-products',
+        'side',
+        'default'
+    );
+}
+
+// Build product meta Box
+function grocery_meta_box( $post ) {
+    
+    //retrieve our custom meta box values
+    $gs_meta = get_post_meta( $post->ID, '_grocery_product_data', true );
+
+    $gcery_sku = ( !empty( $gs_meta['sku'] ) ) ? $gs_meta['sku'] : '';
+    $gcery_price = ( !empty( $gs_meta['price'] ) ) ? $gs_meta['price'] : '';
+    $gcery_weight = ( !empty( $gs_meta['weight'] ) ) ? $gs_meta['weight'] : '';
+    $gcery_color = ( !empty( $gs_meta['color'] ) ) ? $gs_meta['color'] : '';
+    $gcery_inventory = ( !empty( $gs_meta['inventory'] ) ) ? $gs_meta['inventory'] : '';
+
+    //nonce field for security
+    wp_nonce_field( 'meta-box-save', 'grocery-plugin' );
+
+    //display meta box form
+    echo '<table>';
+    echo '<tr>';
+    echo '<td>'.__('Sku', 'grocery-plugin').':</td>
+          <td><input type="text" name="grocery_product[sku]" value="'.esc_attr( $gcery_sku ).'" size="10"></td>';
+    echo '</tr><tr>';
+    echo '<td>'.__('Price', 'grocery-plugin').':</td>
+          <td><input type="text" name="grocery_product[price]" value="'.esc_attr( $gcery_price ).'" size="5"></td>';
+    echo '</tr><tr>';
+    echo '<td>'.__('Weight', 'grocery-plugin').':</td>
+          <td><input type="text" name="grocery_product[weight]" value="'.esc_attr( $gcery_weight ).'" size="5"></td>';
+    echo '</tr><tr>';
+    echo '<td>'.__('Color', 'grocery-plugin').':</td>
+          <td><input type="text" name="grocery_product[color]" value="'.esc_attr( $gcery_color ).'" size="5"></td>';
+    echo '</tr><tr>';
+    echo '<td>Inventory:</td>
+            <td><select name="grocery_product[inventory]" id="grocery_product[inventory]">
+                <option value="In Stock"' .selected( $gcery_inventory, 'In Stock', false ). '>'.__( 'In Stock', 'grocery-plugin' ).'</option>
+                <option value="Backordered"' .selected( $gcery_inventory, 'Backordered', false ). '>'.__( 'Backordered', 'grocery-plugin' ).'</option>
+                <option value="Out of Stock"' .selected( $gcery_inventory, 'Out of Stock', false ). '>'.__( 'Out of Stock', 'grocery-plugin' ).'</option>
+                <option value="Discontinued"' .selected( $gcery_inventory, 'Discontinued', false ). '>'.__( 'Discontinued', 'grocery-plugin' ).'</option>
+            </select></td>';
+    echo '</tr>';
+
+    //display the meta box shortcode legend section
+    echo '<tr><td colspan="2"><hr></td></tr>';
+    echo '<tr><td colspan="2"><strong>'.__( 'Shortcode Legend', 'grocery-plugin' ).'</strong></td></tr>';
+    echo '<tr><td>'.__( 'Sku', 'grocery-plugin' ).':</td><td>[gs show=sku]</td></tr>';
+    echo '<tr><td>'.__( 'Price', 'grocery-plugin' ).':</td><td>[gs show=price]</td></tr>';
+    echo '<tr><td>'.__( 'Weight', 'grocery-plugin' ).':</td><td>[gs show=weight]</td></tr>';
+    echo '<tr><td>'.__( 'Color', 'grocery-plugin' ).':</td><td>[gs show=color]</td></tr>';
+    echo '<tr><td>'.__( 'Inventory', 'grocery-plugin' ).':</td><td>[gs show=inventory]</td></tr>';
+    echo '</table>';
+}
