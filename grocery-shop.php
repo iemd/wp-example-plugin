@@ -299,3 +299,121 @@ function grocery_shop_shortcode( $atts, $content = null ) {
     //return the shortcode value to display
     return $gs_show;
 }
+
+/**
+ * CREATING THE PLUGIN WIDGET
+ */
+// Action hook to create plugin widget
+add_action( 'widgets_init', 'grocery_shop_register_widgets' );
+
+// Register the widget
+function grocery_shop_register_widgets() {
+
+    register_widget( 'gs_widget' );
+
+}
+
+// gs_widget class
+class gs_widget extends WP_Widget {
+
+    //process our new widget
+    function __construct() {
+
+        $widget_ops = array(
+            'classname' => 'gs-widget-class',
+            'description' => __( 'Display Grocery Products', 'grocery-plugin' )
+        );
+        parent::__construct( 'gs_widget', __( 'Products Widget','grocery-plugin'), $widget_ops );
+
+    }
+
+    //build our widget settings form
+    function form( $instance ) {
+
+        $defaults = array(
+            'title' => __( 'Products', 'grocery-plugin' ),
+            'number_products' => '3' 
+        );
+
+        $instance = wp_parse_args( (array)$instance, $defaults );
+        $title = $instance['title'];
+        $number_products = $instance['number_products'];
+        ?>
+            <p>
+                <?php _e('Title', 'grocery-plugin') ?>:
+                <input class="widefat" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
+            </p>
+            <p>
+                <?php _e( 'Number of Products', 'grocery-plugin' ) ?>:
+                <input name=" <?php echo $this->get_field_name( 'number_products' ); ?>" type="text" value="<?php echo absint( $number_products ); ?>" size="2" maxlength="2" />
+            </p>
+        <?php
+    }
+
+    //save our widget settings
+    function update( $new_instance, $old_instance ) {
+
+        $instance = $old_instance;
+        $instance['title'] = sanitize_text_field( $new_instance['title'] );
+        $instance['number_products'] = absint( $new_instance['number_products'] );
+
+        return $instance;
+    }
+
+    //display our widget
+    function widget( $args, $instance ) {
+
+        global $post;
+
+        extract( $args );
+
+        echo $before_widget;
+        $title = apply_filters( 'widget_title', $instance['title'] );
+        $number_products = $instance['number_products'];
+        if ( !empty( $title ) ) {
+            echo $before_title . esc_html( $title ) . $after_title;        
+        }
+
+        //custom query to retrieve products
+        $args = array(
+            'post_type' => 'grocery-products',
+            'posts_per_page' => absint( $number_products )
+        );
+
+        $dispProducts = new WP_Query();
+        $dispProducts->query( $args );
+
+        while ( $dispProducts->have_posts() ) : $dispProducts->the_post();
+
+            //load options array
+            $gcery_options_arr = get_option( 'grocery_options' );
+
+            //load custom meta values
+            $gcery_product_data = get_post_meta( $post->ID, '_grocery_product_data', true );
+            $gs_price = ( !empty( $gcery_product_data['price'] ) ) ? $gcery_product_data['price'] : '';
+            $gs_inventory = ( !empty( $gcery_product_data['inventory'] ) ) ? $gcery_product_data['inventory'] : '';
+            ?>
+            <p>
+                <a href="<?php the_permalink(); ?>" rel="bookmark" title="<?php the_title_attribute(); ?> Product Information">
+                    <?php the_title(); ?>
+                </a>
+            </p>
+            <?php
+            echo '<p>' .__( 'Price', 'grocery-plugin' ) . ': '.$gcery_options_arr['currency_sign'] .$gs_price .'</p>';
+
+            //check if Show Inventory option is enabled
+            if ( $gcery_options_arr['show_inventory'] ) {
+
+                //display the inventory metadata for this product
+                echo '<p>' .__( 'Stock', 'grocery-plugin' ). ': ' .$gs_inventory .'</p>';
+
+            }
+            echo '<hr>';
+            
+        endwhile;
+
+        wp_reset_postdata();
+
+        echo $after_widget;
+    }
+}
